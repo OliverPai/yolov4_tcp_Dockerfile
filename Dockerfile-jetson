@@ -1,4 +1,6 @@
-FROM ubuntu:20.04 AS builder
+# FROM ubuntu:20.04 AS builder
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.5.0
+FROM ${BASE_IMAGE} AS builder
 LABEL maintainer="SincLAB-oliverPai"
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -6,7 +8,7 @@ RUN  sed -i s@/archive.ubuntu.com/@/mirrors.ustc.edu.cn/@g /etc/apt/sources.list
       && apt-get clean \
       && apt-get update \
       && apt-get install --no-install-recommends --no-install-suggests -y gnupg2 ca-certificates \
-            git build-essential libopencv-dev golang\
+            git build-essential libopencv-dev golang \
       && rm -rf /var/lib/apt/lists/*
 
 # RUN git clone https://github.com/AlexeyAB/darknet.git
@@ -17,8 +19,10 @@ RUN cd darknet && make \
       && cd .. && rm -rf darknet \
       && go build yoloTCP_Image.go && cp yoloTCP_Image /usr/local/bin && rm yoloTCP_Image.go
 
+# FROM ubuntu:20.04
+ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.5.0
+FROM ${BASE_IMAGE}
 
-FROM ubuntu:20.04
 LABEL maintainer="SincLAB-oliverPai"
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -33,5 +37,6 @@ COPY --from=builder /usr/local/bin/darknet /home
 COPY --from=builder /usr/local/bin/yoloTCP_Image /home
 COPY files /home
 WORKDIR /home
+RUN go build yoloTCP_Image.go && rm yoloTCP_Image.go
 ENTRYPOINT ./yoloTCP_Image
 
