@@ -1,0 +1,35 @@
+FROM ubuntu:20.04 AS builder
+LABEL maintainer="SincLAB-oliverPai"
+
+ENV DEBIAN_FRONTEND noninteractive
+RUN  sed -i s@/archive.ubuntu.com/@/mirrors.ustc.edu.cn/@g /etc/apt/sources.list \
+      && apt-get clean \
+      && apt-get update \
+      && apt-get install --no-install-recommends --no-install-suggests -y gnupg2 ca-certificates \
+            git build-essential libopencv-dev \
+      && rm -rf /var/lib/apt/lists/*
+
+# RUN git clone https://github.com/AlexeyAB/darknet.git
+COPY darknet darknet
+
+RUN cd darknet && make \
+      && cp darknet /usr/local/bin \
+      && cd .. && rm -rf darknet
+
+FROM ubuntu:20.04
+LABEL maintainer="SincLAB-oliverPai"
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN sed -i s@/archive.ubuntu.com/@/mirrors.ustc.edu.cn/@g /etc/apt/sources.list \
+      && apt-get clean \
+      && apt-get update \
+      && apt-get install --no-install-recommends --no-install-suggests -y libopencv-highgui-dev golang\
+      && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /usr/local/bin/darknet /home
+COPY files /home
+WORKDIR /home
+RUN go build yoloTCP_Image.go && rm yoloTCP_Image.go
+ENTRYPOINT ./yoloTCP_Image
+
