@@ -37,6 +37,5 @@ COPY --from=builder /usr/local/bin/darknet /home
 COPY --from=builder /usr/local/bin/yoloTCP_Image /home
 COPY files /home
 WORKDIR /home
-RUN go build yoloTCP_Image.go && rm yoloTCP_Image.go
 ENTRYPOINT ./yoloTCP_Image
 
